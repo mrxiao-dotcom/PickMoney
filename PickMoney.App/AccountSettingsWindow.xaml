@@ -1,0 +1,117 @@
+<Window x:Class="PickMoney.App.AccountSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="账户设置"
+        Height="680"
+        Width="1100"
+        MinHeight="560"
+        MinWidth="920"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" LastChildFill="False">
+            <TextBlock FontSize="20" FontWeight="SemiBold" Text="账户设置" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="新增账户" Command="{Binding AddAccountCommand}" Margin="0,0,8,0" MinWidth="96" />
+                <Button Content="删除账户" Command="{Binding RemoveAccountCommand}" Margin="0,0,8,0" MinWidth="96" />
+                <Button Content="保存并关闭" Command="{Binding SaveCommand}" Margin="0,0,8,0" MinWidth="110" />
+                <Button Content="取消" Command="{Binding CancelCommand}" MinWidth="88" />
+            </StackPanel>
+        </DockPanel>
+
+        <Grid Grid.Row="1" Margin="0,14,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Padding="12" BorderBrush="#DDD" BorderThickness="1" CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="账户列表" />
+                    <ListBox Grid.Row="1"
+                             Margin="0,12,0,0"
+                             ItemsSource="{Binding Accounts}"
+                             SelectedItem="{Binding SelectedAccount, Mode=TwoWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="10" Margin="0,0,0,8" BorderBrush="#E6E6E6" BorderThickness="1" CornerRadius="6">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding AccountName}" />
+                                        <TextBlock Foreground="#666" Text="{Binding BuyAmount, StringFormat=买入金额: {0:F2} USDT}" />
+                                        <TextBlock Foreground="#666" Text="{Binding AllocationParts, StringFormat=分摊份数: {0}}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Padding="16" BorderBrush="#DDD" BorderThickness="1" CornerRadius="8">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid DataContext="{Binding SelectedAccount}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+                            <TextBlock Foreground="#666" Text="账户名" />
+                            <TextBox Text="{Binding AccountName, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,12">
+                            <TextBlock Foreground="#666" Text="API Key" />
+                            <TextBox Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,12">
+                            <TextBlock Foreground="#666" Text="Secret Key" />
+                            <TextBox Text="{Binding SecretKey, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,12">
+                            <TextBlock Foreground="#666" Text="分摊份数" />
+                            <TextBox Text="{Binding AllocationParts, UpdateSourceTrigger=PropertyChanged, TargetNullValue='5'}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,12">
+                            <TextBlock Foreground="#666" Text="买入金额" />
+                            <TextBox Text="{Binding BuyAmount, UpdateSourceTrigger=PropertyChanged, TargetNullValue='100'}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,12,12">
+                            <CheckBox Content="允许开仓" IsChecked="{Binding EnableOpenPosition, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,12">
+                            <CheckBox Content="允许止盈" IsChecked="{Binding EnableTakeProfit, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <TextBlock Grid.Row="2" Foreground="#666" Text="提示：保存后会立即刷新主窗口账户列表，后续扫描将按最新账户配置执行。" />
+    </Grid>
+</Window>

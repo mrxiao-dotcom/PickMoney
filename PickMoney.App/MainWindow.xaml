@@ -1,0 +1,221 @@
+﻿<Window x:Class="PickMoney.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="PickMoney - Binance Futures Scanner"
+        Height="900"
+        Width="1520"
+        MinHeight="760"
+        MinWidth="1280"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="1.2*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource PanelBorderStyle}">
+            <DockPanel LastChildFill="False">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Button Content="启动扫描" Command="{Binding StartCommand}" Padding="12,7" MinWidth="0" />
+                    <Button Content="停止扫描" Command="{Binding StopCommand}" Background="{StaticResource DangerBrush}" Padding="12,7" MinWidth="0" />
+                    <Button Content="保存配置" Command="{Binding SaveConfigCommand}" Padding="12,7" MinWidth="0" />
+                    <Button Content="账户设置" Command="{Binding OpenAccountSettingsCommand}" Padding="12,7" MinWidth="0" />
+                    <Button Content="策略设置" Command="{Binding OpenStrategySettingsCommand}" Padding="12,7" MinWidth="0" />
+                    <Button Content="刷新持仓" Command="{Binding RefreshPositionsCommand}" Background="{StaticResource SuccessBrush}" Padding="12,7" MinWidth="0" Margin="0,0,0,8" />
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Right"
+                           VerticalAlignment="Center"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Text="多账户币安合约 Ticker 扫描系统" />
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1" Style="{StaticResource PanelBorderStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="1.1*" />
+                    <ColumnDefinition Width="1.1*" />
+                    <ColumnDefinition Width="1.6*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock VerticalAlignment="Center"
+                           Margin="0,0,16,0"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Text="策略 / 推送" />
+
+                <TextBlock Grid.Column="1"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Text="{Binding StrategySummary}" />
+
+                <TextBlock Grid.Column="2"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Text="{Binding WebhookSummary}" />
+
+                <TextBox Grid.Column="3"
+                         Margin="0,0,12,0"
+                         Text="{Binding ManualSymbolsInput, UpdateSourceTrigger=PropertyChanged}" />
+
+                <StackPanel Grid.Column="4" Orientation="Horizontal">
+                    <Button Content="导入" Command="{Binding ImportManualSymbolsCommand}" Background="{StaticResource SuccessBrush}" Padding="12,7" MinWidth="0" Margin="0,0,8,8" />
+                    <Button Content="策略设置" Command="{Binding OpenStrategySettingsCommand}" Padding="12,7" MinWidth="0" Margin="0,0,0,8" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="1.15*" />
+                <ColumnDefinition Width="1.8*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="账户列表" />
+                        <TextBlock DockPanel.Dock="Right"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="账户设置可编辑" />
+                    </DockPanel>
+                    <ListBox Grid.Row="1"
+                             Margin="0,14,0,0"
+                             ItemsSource="{Binding Accounts}"
+                             SelectedItem="{Binding SelectedAccount, Mode=TwoWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="14" Margin="0,0,0,10" Background="{StaticResource SurfaceAltBrush}" BorderBrush="{StaticResource BorderBrushTheme}" BorderThickness="1" CornerRadius="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding AccountName}" />
+                                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Text="{Binding BuyAmount, StringFormat=买入金额: {0:F2} USDT}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Text="{Binding AllocationParts, StringFormat=分摊份数: {0}}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="本轮跌幅前10" />
+                        <TextBlock DockPanel.Dock="Right"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="市场状态" />
+                    </DockPanel>
+                    <DataGrid Grid.Row="1" Margin="0,14,0,0" ItemsSource="{Binding TopDropTickers}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="品种" Binding="{Binding Symbol}" Width="100" />
+                            <DataGridTextColumn Header="跌幅(%)" Binding="{Binding DropPercent, StringFormat=F2}" Width="88" />
+                            <DataGridTextColumn Header="距阈值(%)" Binding="{Binding ThresholdGap, StringFormat=F2}" Width="95" />
+                            <DataGridTextColumn Header="现价" Binding="{Binding LastPrice, StringFormat=F4}" Width="100" />
+                            <DataGridTextColumn Header="开盘价" Binding="{Binding OpenPrice, StringFormat=F4}" Width="100" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="账户持仓明细" />
+                        <TextBlock DockPanel.Dock="Right"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="{Binding SelectedAccount.AccountName, TargetNullValue=请选择账户}" />
+                    </DockPanel>
+                    <TextBlock Grid.Row="1"
+                               Margin="0,10,0,0"
+                               Foreground="{StaticResource TextSecondaryBrush}">
+                        <Run Text="钱包权益: " />
+                        <Run Text="{Binding SelectedAccountWalletBalance, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="  |  可用余额: " />
+                        <Run Text="{Binding SelectedAccountAvailableBalance, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="  |  持仓市值: " />
+                        <Run Text="{Binding SelectedAccountPositionMarketValue, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="  |  币种数量: " />
+                        <Run Text="{Binding SelectedAccountPositionSymbolCount}" />
+                    </TextBlock>
+                    <DataGrid Grid.Row="2" Margin="0,14,0,0" ItemsSource="{Binding Positions}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="品种" Binding="{Binding Symbol}" Width="92" />
+                            <DataGridTextColumn Header="浮盈" Binding="{Binding UnrealizedPnl, StringFormat=F2}" Width="78" />
+                            <DataGridTextColumn Header="收益率%" Binding="{Binding PnlPercent, StringFormat=F2}" Width="74" />
+                            <DataGridTextColumn Header="市值" Binding="{Binding MarketValue, StringFormat=F2}" Width="82" />
+                            <DataGridTextColumn Header="数量" Binding="{Binding Quantity, StringFormat=F2}" Width="72" />
+                            <DataGridTextColumn Header="开仓价" Binding="{Binding EntryPrice, StringFormat=F2}" Width="84" />
+                            <DataGridTextColumn Header="标记价" Binding="{Binding MarkPrice, StringFormat=F2}" Width="84" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="3" Style="{StaticResource PanelBorderStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <DockPanel>
+                    <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="日志信息" />
+                    <TextBlock DockPanel.Dock="Right"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Text="运行输出" />
+                </DockPanel>
+                <TextBox Grid.Row="1"
+                         Margin="0,14,0,0"
+                         Padding="12"
+                         IsReadOnly="True"
+                         Text="{Binding LogText}"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"
+                         AcceptsReturn="True"
+                         Background="{StaticResource SurfaceAltBrush}"
+                         BorderBrush="{StaticResource BorderBrushTheme}" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
