@@ -102,8 +102,10 @@ public sealed class BinanceFuturesService : IBinanceFuturesService, IDisposable
 
         return new AccountAssetSummary
         {
+            AccountEquity = decimal.Round(accountInfo?.TotalMarginBalance ?? 0m, 2, MidpointRounding.AwayFromZero),
             WalletBalance = decimal.Round(accountInfo?.TotalWalletBalance ?? 0m, 2, MidpointRounding.AwayFromZero),
             AvailableBalance = decimal.Round(accountInfo?.AvailableBalance ?? 0m, 2, MidpointRounding.AwayFromZero),
+            UnrealizedProfit = decimal.Round(accountInfo?.TotalUnrealizedProfit ?? 0m, 2, MidpointRounding.AwayFromZero),
             PositionMarketValue = decimal.Round(positions.Sum(item => item.MarketValue), 2, MidpointRounding.AwayFromZero),
             PositionSymbolCount = positions.Count
         };
@@ -338,6 +340,8 @@ public sealed class BinanceFuturesService : IBinanceFuturesService, IDisposable
     private sealed class FuturesAccountDto
     {
         public decimal TotalWalletBalance { get; set; }
+        public decimal TotalMarginBalance { get; set; }
+        public decimal TotalUnrealizedProfit { get; set; }
         public decimal AvailableBalance { get; set; }
     }
 

@@ -23,8 +23,10 @@ public class MainViewModel : ObservableObject
     private string _feishuWebhooks = string.Empty;
     private string _manualSymbolsInput = string.Empty;
     private string _logText = string.Empty;
+    private decimal _selectedAccountEquity;
     private decimal _selectedAccountWalletBalance;
     private decimal _selectedAccountAvailableBalance;
+    private decimal _selectedAccountUnrealizedProfit;
     private decimal _selectedAccountPositionMarketValue;
     private int _selectedAccountPositionSymbolCount;
     private bool _isRunning;
@@ -164,6 +166,12 @@ public class MainViewModel : ObservableObject
         set => SetProperty(ref _logText, value);
     }
 
+    public decimal SelectedAccountEquity
+    {
+        get => _selectedAccountEquity;
+        set => SetProperty(ref _selectedAccountEquity, value);
+    }
+
     public decimal SelectedAccountWalletBalance
     {
         get => _selectedAccountWalletBalance;
@@ -174,6 +182,12 @@ public class MainViewModel : ObservableObject
     {
         get => _selectedAccountAvailableBalance;
         set => SetProperty(ref _selectedAccountAvailableBalance, value);
+    }
+
+    public decimal SelectedAccountUnrealizedProfit
+    {
+        get => _selectedAccountUnrealizedProfit;
+        set => SetProperty(ref _selectedAccountUnrealizedProfit, value);
     }
 
     public decimal SelectedAccountPositionMarketValue
@@ -266,8 +280,10 @@ public class MainViewModel : ObservableObject
         if (SelectedAccount is null)
         {
             Positions.Clear();
+            SelectedAccountEquity = 0m;
             SelectedAccountWalletBalance = 0m;
             SelectedAccountAvailableBalance = 0m;
+            SelectedAccountUnrealizedProfit = 0m;
             SelectedAccountPositionMarketValue = 0m;
             SelectedAccountPositionSymbolCount = 0;
             return;
@@ -283,8 +299,10 @@ public class MainViewModel : ObservableObject
             Positions.Add(position);
         }
 
+        SelectedAccountEquity = summary.AccountEquity;
         SelectedAccountWalletBalance = summary.WalletBalance;
         SelectedAccountAvailableBalance = summary.AvailableBalance;
+        SelectedAccountUnrealizedProfit = summary.UnrealizedProfit;
         SelectedAccountPositionMarketValue = summary.PositionMarketValue;
         SelectedAccountPositionSymbolCount = summary.PositionSymbolCount;
     }
@@ -501,7 +519,7 @@ public class MainViewModel : ObservableObject
         foreach (var account in _currentConfig.Accounts)
         {
             var summary = await _binanceService.GetAccountAssetSummaryAsync(account, cancellationToken);
-            summaries.Add($"{account.AccountName} - {summary.WalletBalance:F2} USDT");
+            summaries.Add($"{account.AccountName} - 账户权益 {summary.AccountEquity:F2} USDT | 钱包余额 {summary.WalletBalance:F2} USDT | 未实现盈亏 {summary.UnrealizedProfit:F2} USDT | 可用余额 {summary.AvailableBalance:F2} USDT");
         }
 
         if (summaries.Count == 0)

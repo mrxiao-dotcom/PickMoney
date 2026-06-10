@@ -167,8 +167,12 @@
                     <TextBlock Grid.Row="1"
                                Margin="0,10,0,0"
                                Foreground="{StaticResource TextSecondaryBrush}">
-                        <Run Text="钱包权益: " />
+                        <Run Text="账户权益: " />
+                        <Run Text="{Binding SelectedAccountEquity, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="  |  钱包余额: " />
                         <Run Text="{Binding SelectedAccountWalletBalance, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="  |  未实现盈亏: " />
+                        <Run Text="{Binding SelectedAccountUnrealizedProfit, StringFormat={}{0:F2} USDT}" />
                         <Run Text="  |  可用余额: " />
                         <Run Text="{Binding SelectedAccountAvailableBalance, StringFormat={}{0:F2} USDT}" />
                         <Run Text="  |  持仓市值: " />
