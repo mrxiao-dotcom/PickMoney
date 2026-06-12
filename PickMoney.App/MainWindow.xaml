@@ -168,27 +168,31 @@
                                Margin="0,10,0,0"
                                Foreground="{StaticResource TextSecondaryBrush}">
                         <Run Text="账户权益: " />
-                        <Run Text="{Binding SelectedAccountEquity, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="{Binding SelectedAccountEquity, StringFormat={}{0:G} USDT}" />
                         <Run Text="  |  钱包余额: " />
-                        <Run Text="{Binding SelectedAccountWalletBalance, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="{Binding SelectedAccountWalletBalance, StringFormat={}{0:G} USDT}" />
                         <Run Text="  |  未实现盈亏: " />
-                        <Run Text="{Binding SelectedAccountUnrealizedProfit, StringFormat={}{0:F2} USDT}" />
-                        <Run Text="  |  可用余额: " />
-                        <Run Text="{Binding SelectedAccountAvailableBalance, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="{Binding SelectedAccountUnrealizedProfit, StringFormat={}{0:G} USDT}" />
+                    </TextBlock>
+                    <TextBlock Grid.Row="2"
+                               Margin="0,4,0,0"
+                               Foreground="{StaticResource TextSecondaryBrush}">
+                        <Run Text="可用余额: " />
+                        <Run Text="{Binding SelectedAccountAvailableBalance, StringFormat={}{0:G} USDT}" />
                         <Run Text="  |  持仓市值: " />
-                        <Run Text="{Binding SelectedAccountPositionMarketValue, StringFormat={}{0:F2} USDT}" />
+                        <Run Text="{Binding SelectedAccountPositionMarketValue, StringFormat={}{0:G} USDT}" />
                         <Run Text="  |  币种数量: " />
                         <Run Text="{Binding SelectedAccountPositionSymbolCount}" />
                     </TextBlock>
-                    <DataGrid Grid.Row="2" Margin="0,14,0,0" ItemsSource="{Binding Positions}" IsReadOnly="True">
+                    <DataGrid Grid.Row="3" Margin="0,14,0,0" ItemsSource="{Binding Positions}" IsReadOnly="True">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="品种" Binding="{Binding Symbol}" Width="92" />
-                            <DataGridTextColumn Header="浮盈" Binding="{Binding UnrealizedPnl, StringFormat=F2}" Width="78" />
-                            <DataGridTextColumn Header="收益率%" Binding="{Binding PnlPercent, StringFormat=F2}" Width="74" />
-                            <DataGridTextColumn Header="市值" Binding="{Binding MarketValue, StringFormat=F2}" Width="82" />
-                            <DataGridTextColumn Header="数量" Binding="{Binding Quantity, StringFormat=F2}" Width="72" />
-                            <DataGridTextColumn Header="开仓价" Binding="{Binding EntryPrice, StringFormat=F2}" Width="84" />
-                            <DataGridTextColumn Header="标记价" Binding="{Binding MarkPrice, StringFormat=F2}" Width="84" />
+                            <DataGridTextColumn Header="浮盈" Binding="{Binding UnrealizedPnl, StringFormat=G}" Width="88" />
+                            <DataGridTextColumn Header="收益率%" Binding="{Binding PnlPercent, StringFormat=G}" Width="84" />
+                            <DataGridTextColumn Header="市值" Binding="{Binding MarketValue, StringFormat=G}" Width="88" />
+                            <DataGridTextColumn Header="数量" Binding="{Binding Quantity, StringFormat=G}" Width="82" />
+                            <DataGridTextColumn Header="开仓价" Binding="{Binding EntryPrice, StringFormat=G}" Width="100" />
+                            <DataGridTextColumn Header="标记价" Binding="{Binding MarkPrice, StringFormat=G}" Width="100" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
