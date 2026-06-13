@@ -32,6 +32,7 @@ public class MainViewModel : ObservableObject
     private bool _isRunning;
     private bool _isImportingManualSymbols;
     private AccountViewModel? _selectedAccount;
+    private PositionViewModel? _selectedPosition;
     private CancellationTokenSource? _scanCancellation;
 
     public MainViewModel(ConfigService configService, TradingOrchestrator tradingOrchestrator, IBinanceFuturesService binanceService, NotificationService notificationService)
@@ -55,6 +56,8 @@ public class MainViewModel : ObservableObject
         StopCommand = new RelayCommand(_ => Stop(), _ => IsRunning);
         RefreshPositionsCommand = new RelayCommand(async _ => await RefreshSelectedAccountPositionsAsync(), _ => SelectedAccount is not null);
         ImportManualSymbolsCommand = new RelayCommand(async _ => await ImportManualSymbolsAsync(), _ => CanImportManualSymbols());
+        ClosePositionCommand = new RelayCommand(async _ => await CloseSelectedPositionAsync(), _ => CanClosePosition());
+        CloseAllPositionsCommand = new RelayCommand(async _ => await CloseAllPositionsAsync(), _ => CanCloseAllPositions());
 
         _scanTimer = new DispatcherTimer();
         _scanTimer.Tick += async (_, _) => await ExecuteScanAsync();
@@ -75,6 +78,8 @@ public class MainViewModel : ObservableObject
     public RelayCommand StopCommand { get; }
     public RelayCommand RefreshPositionsCommand { get; }
     public RelayCommand ImportManualSymbolsCommand { get; }
+    public RelayCommand ClosePositionCommand { get; }
+    public RelayCommand CloseAllPositionsCommand { get; }
 
     public string TriggerDropPercent
     {
@@ -236,7 +241,20 @@ public class MainViewModel : ObservableObject
             {
                 RemoveAccountCommand.RaiseCanExecuteChanged();
                 RefreshPositionsCommand.RaiseCanExecuteChanged();
+                CloseAllPositionsCommand.RaiseCanExecuteChanged();
                 _ = RefreshSelectedAccountPositionsAsync();
+            }
+        }
+    }
+
+    public PositionViewModel? SelectedPosition
+    {
+        get => _selectedPosition;
+        set
+        {
+            if (SetProperty(ref _selectedPosition, value))
+            {
+                ClosePositionCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -305,6 +323,69 @@ public class MainViewModel : ObservableObject
         SelectedAccountUnrealizedProfit = summary.UnrealizedProfit;
         SelectedAccountPositionMarketValue = summary.PositionMarketValue;
         SelectedAccountPositionSymbolCount = summary.PositionSymbolCount;
+    }
+
+    private bool CanClosePosition()
+    {
+        return SelectedAccount is not null
+            && SelectedPosition is not null
+            && !string.IsNullOrWhiteSpace(SelectedPosition.Symbol);
+    }
+
+    private async Task CloseSelectedPositionAsync()
+    {
+        if (SelectedAccount is null || SelectedPosition is null)
+        {
+            return;
+        }
+
+        var accountModel = SelectedAccount.ToModel();
+        var symbol = SelectedPosition.Symbol;
+
+        try
+        {
+            AppendExternalLog("INFO", SelectedAccount.AccountName, $"正在平仓 {symbol}...", DateTime.Now);
+            await _binanceService.ClosePositionAsync(accountModel, symbol, CancellationToken.None);
+            AppendExternalLog("TRADE", SelectedAccount.AccountName, $"已手动平仓 {symbol}。", DateTime.Now);
+            await RefreshSelectedAccountPositionsAsync();
+        }
+        catch (Exception ex)
+        {
+            AppendExternalLog("ERROR", SelectedAccount.AccountName, $"平仓 {symbol} 失败：{ex.Message}", DateTime.Now);
+        }
+    }
+
+    private bool CanCloseAllPositions()
+    {
+        return SelectedAccount is not null && Positions.Count > 0;
+    }
+
+    private async Task CloseAllPositionsAsync()
+    {
+        if (SelectedAccount is null || Positions.Count == 0)
+        {
+            return;
+        }
+
+        var accountModel = SelectedAccount.ToModel();
+        var symbols = Positions.Select(p => p.Symbol).ToList();
+        AppendExternalLog("INFO", SelectedAccount.AccountName, $"正在一键清仓，共 {symbols.Count} 个合约...", DateTime.Now);
+
+        foreach (var symbol in symbols)
+        {
+            try
+            {
+                await _binanceService.ClosePositionAsync(accountModel, symbol, CancellationToken.None);
+                AppendExternalLog("TRADE", SelectedAccount.AccountName, $"  已平仓 {symbol}。", DateTime.Now);
+            }
+            catch (Exception ex)
+            {
+                AppendExternalLog("ERROR", SelectedAccount.AccountName, $"清仓 {symbol} 失败：{ex.Message}", DateTime.Now);
+            }
+        }
+
+        AppendExternalLog("TRADE", SelectedAccount.AccountName, $"一键清仓完成，共平掉 {symbols.Count} 个合约。", DateTime.Now);
+        await RefreshSelectedAccountPositionsAsync();
     }
 
     private async Task StartAsync()

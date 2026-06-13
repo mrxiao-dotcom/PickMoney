@@ -39,6 +39,7 @@ public class TradingOrchestrator
 
         var buyResults = new List<TradeExecutionResult>();
         var tpResults = new List<TradeExecutionResult>();
+        var closeAllResults = new List<TradeExecutionResult>();
 
         foreach (var account in config.Accounts)
         {
@@ -55,20 +56,27 @@ public class TradingOrchestrator
             runtime.LastScanTime = DateTime.Now;
             runtime.LastPositionCheckTime = DateTime.Now;
 
-            if (account.EnableOpenPosition)
+            if (account.BuyAmount == 0)
             {
-                await HandleOpenPositionsAsync(account, config, candidates, positions, buyResults, cancellationToken);
+                await HandleClearAllAsync(account, positions, closeAllResults, cancellationToken);
             }
-
-            if (account.EnableTakeProfit)
+            else
             {
-                await HandleTakeProfitsAsync(account, config, positions, tpResults, cancellationToken);
+                if (account.EnableOpenPosition)
+                {
+                    await HandleOpenPositionsAsync(account, config, candidates, positions, buyResults, cancellationToken);
+                }
+
+                if (account.EnableTakeProfit)
+                {
+                    await HandleTakeProfitsAsync(account, config, positions, tpResults, cancellationToken);
+                }
             }
 
             await positionRefresh(account.Id);
         }
 
-        await FlushNotificationsAsync(config, buyResults, tpResults, cancellationToken);
+        await FlushNotificationsAsync(config, buyResults, tpResults, closeAllResults, cancellationToken);
     }
 
     private async Task HandleOpenPositionsAsync(
@@ -146,10 +154,45 @@ public class TradingOrchestrator
         }
     }
 
+    private async Task HandleClearAllAsync(
+        AccountConfig account,
+        IReadOnlyList<PositionInfo> positions,
+        List<TradeExecutionResult> results,
+        CancellationToken cancellationToken)
+    {
+        if (positions.Count == 0)
+        {
+            return;
+        }
+
+        var symbols = string.Join("、", positions.Select(p => p.Symbol));
+        var message = $"账户 {account.AccountName} 执行一键清仓，共平掉 {positions.Count} 个合约：{symbols}。";
+        await _tradeLogService.WriteAsync(account.AccountName, message);
+        Log("CLOSE_ALL", account.AccountName, message);
+
+        foreach (var position in positions)
+        {
+            await _binanceService.ClosePositionAsync(account, position.Symbol, cancellationToken);
+            Log("CLOSE_ALL", account.AccountName, $"  已平仓 {position.Symbol}，数量 {position.Quantity}，浮盈 {position.UnrealizedPnl}。");
+
+            lock (results)
+            {
+                results.Add(new TradeExecutionResult
+                {
+                    Symbol = position.Symbol,
+                    AccountName = account.AccountName,
+                    MarketValue = position.MarketValue,
+                    TargetValue = 0
+                });
+            }
+        }
+    }
+
     private async Task FlushNotificationsAsync(
         AppConfig config,
         List<TradeExecutionResult> buyResults,
         List<TradeExecutionResult> tpResults,
+        List<TradeExecutionResult> closeAllResults,
         CancellationToken cancellationToken)
     {
         var now = DateTime.Now;
@@ -192,6 +235,28 @@ public class TradingOrchestrator
                 "【止盈通知】",
                 $"时间：{now:yyyy-MM-dd HH:mm:ss}",
                 $"本次止盈品种数：{symbolGroups.Count}",
+                "明细：",
+                string.Join("\n", lines)
+            });
+            await _notificationService.PushAsync(config.Notification, message, cancellationToken);
+        }
+
+        if (closeAllResults.Count > 0)
+        {
+            var symbolGroups = closeAllResults.GroupBy(r => r.Symbol, StringComparer.OrdinalIgnoreCase).ToList();
+            var lines = symbolGroups
+                .Select(g =>
+                {
+                    var first = g.First();
+                    var accountNames = g.Select(r => r.AccountName).Distinct().ToList();
+                    return $"- {g.Key} | 账户数 {accountNames.Count} | 账户 {string.Join("、", accountNames)} | 平仓时市值 {first.MarketValue:F2} USDT";
+                })
+                .ToList();
+            var message = string.Join("\n", new[]
+            {
+                "【一键清仓通知】",
+                $"时间：{now:yyyy-MM-dd HH:mm:ss}",
+                $"本次清仓品种数：{symbolGroups.Count}",
                 "明细：",
                 string.Join("\n", lines)
             });

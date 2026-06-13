@@ -180,7 +180,13 @@
                         <Run Text="  |  持仓数: " />
                         <Run Text="{Binding SelectedAccountPositionSymbolCount}" />
                     </TextBlock>
-                    <DataGrid Grid.Row="2" Margin="0,10,0,0" ItemsSource="{Binding Positions}" IsReadOnly="True">
+                    <DataGrid Grid.Row="2" Margin="0,10,0,0" ItemsSource="{Binding Positions}" IsReadOnly="True" SelectedItem="{Binding SelectedPosition, Mode=TwoWay}">
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="平仓" Command="{Binding ClosePositionCommand}" />
+                                <MenuItem Header="一键清仓" Command="{Binding CloseAllPositionsCommand}" />
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="品种" Binding="{Binding Symbol}" Width="90" />
                             <DataGridTextColumn Header="浮盈" Binding="{Binding UnrealizedPnl, StringFormat=F2}" Width="80" />
