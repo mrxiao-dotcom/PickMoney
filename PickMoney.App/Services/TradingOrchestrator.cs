@@ -27,6 +27,7 @@ public class TradingOrchestrator
         AppConfig config,
         ObservableCollection<AccountRuntimeState> runtimeStates,
         Func<Guid, Task> positionRefresh,
+        Action<Guid, decimal>? equityCallback = null,
         CancellationToken cancellationToken = default)
     {
         var tickers = await _binanceService.GetTickersAsync(cancellationToken);
@@ -55,6 +56,19 @@ public class TradingOrchestrator
             runtime.Positions = positions.ToList();
             runtime.LastScanTime = DateTime.Now;
             runtime.LastPositionCheckTime = DateTime.Now;
+
+            // 读取账户权益用于计算净值，失败不影响本轮交易逻辑
+            try
+            {
+                var equity = await _binanceService.GetAccountEquityAsync(account, cancellationToken);
+                runtime.AccountEquity = equity;
+                runtime.HasEquity = true;
+                equityCallback?.Invoke(account.Id, equity);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log("WARN", account.AccountName, $"读取账户权益失败，净值暂不更新：{ex.Message}");
+            }
 
             if (account.BuyAmount == 0)
             {
@@ -124,20 +138,33 @@ public class TradingOrchestrator
         List<TradeExecutionResult> results,
         CancellationToken cancellationToken)
     {
-        var unitAmount = account.AllocationParts <= 0
-            ? account.BuyAmount
-            : decimal.Round(account.BuyAmount / account.AllocationParts, 2, MidpointRounding.AwayFromZero);
-        var targetValue = decimal.Round(unitAmount * config.Strategy.TakeProfitMultiplier, 2, MidpointRounding.AwayFromZero);
+        // 目标涨幅倍数 = 目标价 / 开仓均价。注意程序固定 1 倍杠杆、逐仓模式，
+        // 这里的"倍"是价格倍数而非杠杆倍数，倍数为 N 时对应收益率约为 (N - 1) * 100%。
+        // 判定基数使用每个持仓自己的真实开仓成本（EntryPrice * Quantity），
+        // 避免用配置里的名义下单额做基数导致取整缺口，出现"价格已到目标却没出局"。
+        const decimal relativeTolerance = 0.000001m;
 
         foreach (var position in positions)
         {
-            if (position.MarketValue < targetValue)
+            if (position.Quantity <= 0 || position.EntryPrice <= 0)
+            {
+                continue;
+            }
+
+            var costBasis = position.EntryPrice * position.Quantity;
+            var targetValue = decimal.Round(costBasis * config.Strategy.TakeProfitMultiplier, 2, MidpointRounding.AwayFromZero);
+
+            // 相对容差，吸收成交均价末位误差，避免"到价不出局"
+            var threshold = targetValue * (1m - relativeTolerance);
+            if (position.MarketValue < threshold)
             {
                 continue;
             }
 
             await _binanceService.ClosePositionAsync(account, position.Symbol, cancellationToken);
-            var message = $"账户 {account.AccountName} 止盈平仓 {position.Symbol}，当前市值 {position.MarketValue}，目标 {targetValue}。";
+            var message = $"账户 {account.AccountName} 止盈平仓 {position.Symbol}，开仓均价 {position.EntryPrice}，现价 {position.MarkPrice}，" +
+                          $"涨幅 {config.Strategy.TakeProfitMultiplier} 倍（浮盈 {position.UnrealizedPnl:F2} USDT，收益率 {position.PnlPercent:F2}%），" +
+                          $"当前市值 {position.MarketValue}，目标市值 {targetValue}。";
             await _tradeLogService.WriteAsync(account.AccountName, message);
             Log("TAKE_PROFIT", account.AccountName, message);
 
@@ -148,7 +175,12 @@ public class TradingOrchestrator
                     Symbol = position.Symbol,
                     AccountName = account.AccountName,
                     MarketValue = position.MarketValue,
-                    TargetValue = targetValue
+                    TargetValue = targetValue,
+                    EntryPrice = position.EntryPrice,
+                    MarkPrice = position.MarkPrice,
+                    UnrealizedPnl = position.UnrealizedPnl,
+                    PnlPercent = position.PnlPercent,
+                    PriceMultiplier = config.Strategy.TakeProfitMultiplier
                 });
             }
         }
@@ -227,7 +259,7 @@ public class TradingOrchestrator
                 {
                     var first = g.First();
                     var accountNames = g.Select(r => r.AccountName).Distinct().ToList();
-                    return $"- {g.Key} | 账户数 {accountNames.Count} | 账户 {string.Join("、", accountNames)} | 当前市值 {first.MarketValue:F2} USDT | 止盈目标 {first.TargetValue:F2} USDT";
+                    return $"- {g.Key} | 账户数 {accountNames.Count} | 账户 {string.Join("、", accountNames)} | 开仓均价 {first.EntryPrice:G} | 现价 {first.MarkPrice:G} | 目标涨幅 {first.PriceMultiplier:G} 倍 | 实际收益率 {first.PnlPercent:F2}% | 浮盈 {first.UnrealizedPnl:F2} USDT | 当前市值 {first.MarketValue:F2} USDT | 目标市值 {first.TargetValue:F2} USDT";
                 })
                 .ToList();
             var message = string.Join("\n", new[]

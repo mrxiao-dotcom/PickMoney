@@ -142,7 +142,7 @@ public class MainViewModel : ObservableObject
         }
     }
 
-    public string StrategySummary => $"触发跌幅 {TriggerDropPercent}% · 止盈倍数 {TakeProfitMultiplier} · 扫描间隔 {ScanIntervalSeconds} 秒";
+    public string StrategySummary => $"触发跌幅 {TriggerDropPercent}% · 目标涨幅倍数 {TakeProfitMultiplier} 倍 · 扫描间隔 {ScanIntervalSeconds} 秒";
 
     public string WebhookSummary
     {
@@ -323,6 +323,7 @@ public class MainViewModel : ObservableObject
         SelectedAccountUnrealizedProfit = summary.UnrealizedProfit;
         SelectedAccountPositionMarketValue = summary.PositionMarketValue;
         SelectedAccountPositionSymbolCount = summary.PositionSymbolCount;
+        SelectedAccount.UpdateEquity(summary.AccountEquity);
     }
 
     private bool CanClosePosition()
@@ -422,7 +423,7 @@ public class MainViewModel : ObservableObject
             _currentConfig = BuildConfig();
             _scanTimer.Interval = TimeSpan.FromSeconds(GetScanInterval());
             await RefreshTopDropTickersAsync();
-            await _tradingOrchestrator.ScanAsync(_currentConfig, RuntimeStates, RefreshPositionByAccountIdAsync, _scanCancellation?.Token ?? CancellationToken.None);
+            await _tradingOrchestrator.ScanAsync(_currentConfig, RuntimeStates, RefreshPositionByAccountIdAsync, UpdateAccountEquity, _scanCancellation?.Token ?? CancellationToken.None);
             await PushDailyAccountSummaryIfNeededAsync(_scanCancellation?.Token ?? CancellationToken.None);
         }
         catch (Exception ex)
@@ -472,6 +473,17 @@ public class MainViewModel : ObservableObject
         }
 
         await RefreshSelectedAccountPositionsAsync();
+    }
+
+    private void UpdateAccountEquity(Guid accountId, decimal equity)
+    {
+        var account = Accounts.FirstOrDefault(item => item.Id == accountId);
+        if (account is null)
+        {
+            return;
+        }
+
+        Application.Current.Dispatcher.Invoke(() => account.UpdateEquity(equity));
     }
 
     private async void OpenAccountSettings()
@@ -667,6 +679,10 @@ public class MainViewModel : ObservableObject
                     {
                         await _binanceService.OpenLongPositionAsync(account, symbol, unitAmount, _scanCancellation?.Token ?? CancellationToken.None);
                         AppendExternalLog("TRADE", account.AccountName, $"手工导入买入 {symbol}，分摊后的单币金额 {unitAmount:F2} USDT。", DateTime.Now);
+                    }
+                    catch (PositionLimitExceededException ex)
+                    {
+                        AppendExternalLog("WARN", account.AccountName, $"手工导入 {symbol} 跳过：{ex.Message}", DateTime.Now);
                     }
                     catch (Exception ex)
                     {

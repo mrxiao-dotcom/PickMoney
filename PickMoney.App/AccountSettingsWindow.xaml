@@ -101,10 +101,19 @@
                         </StackPanel>
 
                         <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,12,12">
-                            <CheckBox Content="允许开仓" IsChecked="{Binding EnableOpenPosition, Mode=TwoWay}" />
+                            <TextBlock Foreground="#666" Text="初始资金（用于算净值）" />
+                            <TextBox Text="{Binding InitialCapital, UpdateSourceTrigger=PropertyChanged, TargetNullValue='0'}" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,12">
+                            <TextBlock Foreground="#666" Text="—" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,12,12">
+                            <CheckBox Content="允许开仓" IsChecked="{Binding EnableOpenPosition, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,12">
                             <CheckBox Content="允许止盈" IsChecked="{Binding EnableTakeProfit, Mode=TwoWay}" />
                         </StackPanel>
                     </Grid>

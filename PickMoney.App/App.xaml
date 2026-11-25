@@ -108,6 +108,33 @@
                 </Setter>
             </Style>
 
+            <!-- 扁平列表项：去掉圆角/边框等特效，仅保留极简选中态 -->
+            <Style x:Key="FlatListBoxItemStyle" TargetType="ListBoxItem">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border x:Name="ItemBorder"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="ItemBorder" Property="Background" Value="#EFF6FF" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ItemBorder" Property="Background" Value="#F8FAFC" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style TargetType="DataGrid">
                 <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />

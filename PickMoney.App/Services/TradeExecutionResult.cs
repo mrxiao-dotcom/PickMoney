@@ -8,4 +8,9 @@ internal sealed class TradeExecutionResult
     public decimal DropPercent { get; init; }
     public decimal MarketValue { get; init; }
     public decimal TargetValue { get; init; }
+    public decimal EntryPrice { get; init; }
+    public decimal MarkPrice { get; init; }
+    public decimal UnrealizedPnl { get; init; }
+    public decimal PnlPercent { get; init; }
+    public decimal PriceMultiplier { get; init; }
 }

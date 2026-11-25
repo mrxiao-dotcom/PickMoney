@@ -12,7 +12,8 @@ public partial class MainWindow : Window
 
         var baseDirectory = AppContext.BaseDirectory;
         var configService = new ConfigService(baseDirectory);
-        var binanceService = new BinanceFuturesService();
+        var positionLimitCache = new PositionLimitCacheService(baseDirectory);
+        var binanceService = new BinanceFuturesService(positionLimitCache);
         var tradeLogService = new TradeLogService(baseDirectory);
         var notificationService = new NotificationService();
 

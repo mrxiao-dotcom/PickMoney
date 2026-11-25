@@ -34,25 +34,29 @@
                 </Grid.RowDefinitions>
 
                 <Border Grid.Row="0" Padding="16" BorderBrush="#DDD" BorderThickness="1" CornerRadius="8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                            <TextBlock Foreground="#666" Text="触发跌幅(%)" />
-                            <TextBox Text="{Binding TriggerDropPercent, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                            <TextBlock Foreground="#666" Text="止盈倍数" />
-                            <TextBox Text="{Binding TakeProfitMultiplier, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Foreground="#666" Text="扫描间隔(秒)" />
-                            <TextBox Text="{Binding ScanIntervalSeconds, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                    </Grid>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                <TextBlock Foreground="#666" Text="触发跌幅(%)" />
+                                <TextBox Text="{Binding TriggerDropPercent, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                <TextBlock Foreground="#666" Text="目标涨幅倍数" />
+                                <TextBox Text="{Binding TakeProfitMultiplier, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Foreground="#666" Text="扫描间隔(秒)" />
+                                <TextBox Text="{Binding ScanIntervalSeconds, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Margin="0,10,0,0" Foreground="#666" TextWrapping="Wrap"
+                                   Text="目标涨幅倍数 = 目标价 / 开仓均价。例：填 10 表示价格涨到开仓均价的 10 倍时止盈出局，此时浮盈为初始投入的 9 倍（收益率 900%）。&#10;注：程序固定使用 1 倍杠杆、逐仓模式，此处的「倍」是价格倍数，不是杠杆倍数。" />
+                    </StackPanel>
                 </Border>
 
                 <Border Grid.Row="1" Margin="0,14,0,0" Padding="16" BorderBrush="#DDD" BorderThickness="1" CornerRadius="8">

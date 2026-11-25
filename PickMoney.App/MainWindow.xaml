@@ -78,14 +78,14 @@
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.85*" />
-                <ColumnDefinition Width="1.3*" />
+                <ColumnDefinition Width="1.35*" />
                 <ColumnDefinition Width="2*" />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Style="{StaticResource PanelBorderStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
@@ -96,29 +96,72 @@
                                    Foreground="{StaticResource TextSecondaryBrush}"
                                    Text="账户设置可编辑" />
                     </DockPanel>
-                    <ListBox Grid.Row="1"
-                             Margin="0,10,0,0"
+                    <Grid Grid.Row="1" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.5*" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="0.9*" />
+                            <ColumnDefinition Width="0.9*" />
+                            <ColumnDefinition Width="0.8*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Text="账户" />
+                        <TextBlock Grid.Column="1" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Text="权益(U)" />
+                        <TextBlock Grid.Column="2" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Text="净值" />
+                        <TextBlock Grid.Column="3" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Text="分摊" />
+                        <TextBlock Grid.Column="4" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Text="单币(U)" />
+                    </Grid>
+                    <ListBox Grid.Row="2"
+                             Margin="0,4,0,0"
+                             ItemContainerStyle="{StaticResource FlatListBoxItemStyle}"
                              ItemsSource="{Binding Accounts}"
                              SelectedItem="{Binding SelectedAccount, Mode=TwoWay}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Padding="10" Margin="0,0,0,8" Background="{StaticResource SurfaceAltBrush}" BorderBrush="{StaticResource BorderBrushTheme}" BorderThickness="1" CornerRadius="8">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel>
-                                            <TextBlock FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding AccountName}" />
-                                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
-                                                       Text="{Binding BuyAmount, StringFormat=买入金额: {0:F2} USDT}" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
-                                                       Text="{Binding AllocationParts, StringFormat=分摊份数: {0}}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
+                                <Grid Height="26">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.5*" />
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="0.9*" />
+                                        <ColumnDefinition Width="0.9*" />
+                                        <ColumnDefinition Width="0.8*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               Text="{Binding DisplayName}" />
+                                    <TextBlock Grid.Column="1"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding EquityText}" />
+                                    <TextBlock Grid.Column="2"
+                                               VerticalAlignment="Center"
+                                               FontWeight="SemiBold"
+                                               Text="{Binding NetValueText}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#16A34A" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsNetValueLoss}" Value="True">
+                                                        <Setter Property="Foreground" Value="#16A34A" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsNetValueProfit}" Value="True">
+                                                        <Setter Property="Foreground" Value="#DC2626" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Grid.Column="3"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding AllocationParts}" />
+                                    <TextBlock Grid.Column="4"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding UnitAmount, StringFormat={}{0:F2}}" />
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -126,31 +169,6 @@
             </Border>
 
             <Border Grid.Column="1" Style="{StaticResource PanelBorderStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <DockPanel>
-                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="本轮跌幅前10" />
-                        <TextBlock DockPanel.Dock="Right"
-                                   VerticalAlignment="Center"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   Text="市场状态" />
-                    </DockPanel>
-                    <DataGrid Grid.Row="1" Margin="0,10,0,0" ItemsSource="{Binding TopDropTickers}" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="品种" Binding="{Binding Symbol}" Width="90" />
-                            <DataGridTextColumn Header="跌幅(%)" Binding="{Binding DropPercent, StringFormat=F2}" Width="80" />
-                            <DataGridTextColumn Header="距阈值(%)" Binding="{Binding ThresholdGap, StringFormat=F2}" Width="88" />
-                            <DataGridTextColumn Header="现价" Binding="{Binding LastPrice, StringFormat=F4}" Width="96" />
-                            <DataGridTextColumn Header="开盘价" Binding="{Binding OpenPrice, StringFormat=F4}" Width="96" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="2" Style="{StaticResource PanelBorderStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -193,39 +211,71 @@
                             <DataGridTextColumn Header="收益率%" Binding="{Binding PnlPercent, StringFormat=F2}" Width="80" />
                             <DataGridTextColumn Header="市值" Binding="{Binding MarketValue, StringFormat=G}" Width="90" />
                             <DataGridTextColumn Header="数量" Binding="{Binding Quantity, StringFormat=G}" Width="86" />
-                            <DataGridTextColumn Header="开仓价" Binding="{Binding EntryPrice, StringFormat=G}" Width="104" />
-                            <DataGridTextColumn Header="标记价" Binding="{Binding MarkPrice, StringFormat=G}" Width="104" />
+                            <DataGridTextColumn Header="开仓价" Binding="{Binding EntryPriceText}" Width="104" />
+                            <DataGridTextColumn Header="标记价" Binding="{Binding MarkPriceText}" Width="104" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" Style="{StaticResource PanelBorderStyle}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <DockPanel>
-                    <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="日志信息" />
-                    <TextBlock DockPanel.Dock="Right"
-                               VerticalAlignment="Center"
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               Text="运行输出" />
-                </DockPanel>
-                <TextBox Grid.Row="1"
-                         Margin="0,10,0,0"
-                         Padding="12"
-                         IsReadOnly="True"
-                         Text="{Binding LogText}"
-                         TextWrapping="Wrap"
-                         VerticalScrollBarVisibility="Auto"
-                         HorizontalScrollBarVisibility="Disabled"
-                         AcceptsReturn="True"
-                         Background="{StaticResource SurfaceAltBrush}"
-                         BorderBrush="{StaticResource BorderBrushTheme}" />
-            </Grid>
-        </Border>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="65*" />
+                <ColumnDefinition Width="35*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="日志信息" />
+                        <TextBlock DockPanel.Dock="Right"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="运行输出" />
+                    </DockPanel>
+                    <TextBox Grid.Row="1"
+                             Margin="0,10,0,0"
+                             Padding="12"
+                             IsReadOnly="True"
+                             Text="{Binding LogText}"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Disabled"
+                             AcceptsReturn="True"
+                             Background="{StaticResource SurfaceAltBrush}"
+                             BorderBrush="{StaticResource BorderBrushTheme}" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="本轮跌幅前10" />
+                        <TextBlock DockPanel.Dock="Right"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="市场状态" />
+                    </DockPanel>
+                    <DataGrid Grid.Row="1" Margin="0,10,0,0" ItemsSource="{Binding TopDropTickers}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="品种" Binding="{Binding Symbol}" Width="90" />
+                            <DataGridTextColumn Header="跌幅(%)" Binding="{Binding DropPercent, StringFormat=F2}" Width="72" />
+                            <DataGridTextColumn Header="距阈值(%)" Binding="{Binding ThresholdGap, StringFormat=F2}" Width="82" />
+                            <DataGridTextColumn Header="现价" Binding="{Binding LastPriceText}" Width="*" />
+                            <DataGridTextColumn Header="开盘价" Binding="{Binding OpenPriceText}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

@@ -5,5 +5,7 @@ public class AccountRuntimeState
     public Guid AccountId { get; set; }
     public DateTime LastScanTime { get; set; }
     public DateTime LastPositionCheckTime { get; set; }
+    public decimal AccountEquity { get; set; }
+    public bool HasEquity { get; set; }
     public List<PositionInfo> Positions { get; set; } = new();
 }

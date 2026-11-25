@@ -8,6 +8,7 @@ public class AccountConfig
     public string SecretKey { get; set; } = string.Empty;
     public int AllocationParts { get; set; } = 5;
     public decimal BuyAmount { get; set; } = 100m;
+    public decimal InitialCapital { get; set; }
     public bool EnableOpenPosition { get; set; } = true;
     public bool EnableTakeProfit { get; set; } = true;
 }
