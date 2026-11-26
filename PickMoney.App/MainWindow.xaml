@@ -135,12 +135,20 @@
                                                Foreground="{StaticResource TextSecondaryBrush}"
                                                VerticalAlignment="Center"
                                                Text="{Binding EquityText}" />
-                                    <TextBlock Grid.Column="2"
-                                               VerticalAlignment="Center"
-                                               FontWeight="SemiBold"
-                                               Text="{Binding NetValueText}">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
+                                    <Button Grid.Column="2"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Center"
+                                           MinWidth="0"
+                                           FontWeight="SemiBold"
+                                           Cursor="Hand"
+                                           Command="{Binding ShowNetValueCommand}"
+                                           Content="{Binding NetValueText}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                <Setter Property="Background" Value="Transparent" />
+                                                <Setter Property="BorderThickness" Value="0" />
+                                                <Setter Property="Margin" Value="0" />
+                                                <Setter Property="Padding" Value="4,1" />
                                                 <Setter Property="Foreground" Value="#16A34A" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsNetValueLoss}" Value="True">
@@ -151,8 +159,8 @@
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                        </Button.Style>
+                                    </Button>
                                     <TextBlock Grid.Column="3"
                                                Foreground="{StaticResource TextSecondaryBrush}"
                                                VerticalAlignment="Center"

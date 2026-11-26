@@ -199,6 +199,9 @@ public class AccountViewModel : ObservableObject
     public string DisplayName =>
         $"{AccountName}{(EnableOpenPosition || EnableTakeProfit ? "" : "  [已停用]")}";
 
+    /// <summary>打开净值弹窗的命令，由主窗口注入</summary>
+    public RelayCommand? ShowNetValueCommand { get; set; }
+
     public static AccountViewModel FromModel(AccountConfig model)
     {
         return new AccountViewModel

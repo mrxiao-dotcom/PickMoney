@@ -1,0 +1,205 @@
+<Window x:Class="PickMoney.App.NetValueWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:PickMoney.App.Controls"
+        mc:Ignorable="d"
+        Title="账户净值"
+        Height="760"
+        Width="1180"
+        MinHeight="620"
+        MinWidth="960"
+        WindowStartupLocation="CenterOwner"
+        FontFamily="Microsoft YaHei UI">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 顶部摘要 -->
+        <Border Grid.Row="0" Padding="16" Background="{StaticResource SurfaceAltBrush}" BorderBrush="{StaticResource BorderBrushTheme}" BorderThickness="1" CornerRadius="8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding AccountName}" />
+                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"
+                               Text="{Binding InitialCapital, StringFormat=初始资金 {0:F2} USDT}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="最新净值 " />
+                    <TextBlock VerticalAlignment="Center" FontSize="26" FontWeight="Bold" Text="{Binding LatestNetValueText}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#64748B" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLatestLoss}" Value="True">
+                                        <Setter Property="Foreground" Value="#16A34A" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsLatestProfit}" Value="True">
+                                        <Setter Property="Foreground" Value="#DC2626" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.25*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 左侧：日历 -->
+            <Border Grid.Column="0" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="上一月" Command="{Binding PreviousMonthCommand}" />
+                        <TextBlock Grid.Column="1"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   Text="{Binding DisplayMonth}" />
+                        <Button Grid.Column="2" Content="下一月" Command="{Binding NextMonthCommand}" />
+                    </Grid>
+
+                    <!-- 星期表头 -->
+                    <Grid Grid.Row="1" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="一" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock Grid.Column="1" Text="二" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock Grid.Column="2" Text="三" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock Grid.Column="3" Text="四" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock Grid.Column="4" Text="五" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock Grid.Column="5" Text="六" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock Grid.Column="6" Text="日" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" />
+                    </Grid>
+
+                    <!-- 日历格子 -->
+                    <ItemsControl Grid.Row="2" Margin="0,6,0,0" ItemsSource="{Binding Days}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="7" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="1" Padding="4,2" CornerRadius="6"
+                                        Background="{Binding BackgroundBrush}"
+                                        BorderBrush="{Binding BorderBrush}"
+                                        BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock HorizontalAlignment="Center"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding DayText}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#1F2937" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasData}" Value="False">
+                                                            <Setter Property="Foreground" Value="#CBD5E1" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                            <Setter Property="Foreground" Value="#2563EB" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock HorizontalAlignment="Center"
+                                                   FontSize="10"
+                                                   Text="{Binding NetValueText}"
+                                                   Visibility="{Binding HasData, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#475569" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsUp}" Value="True">
+                                                            <Setter Property="Foreground" Value="#DC2626" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsDown}" Value="True">
+                                                            <Setter Property="Foreground" Value="#16A34A" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 选中日详情 -->
+                    <Border Grid.Row="4" Padding="12" Margin="0,10,0,0" Background="{StaticResource SurfaceAltBrush}" BorderBrush="{StaticResource BorderBrushTheme}" BorderThickness="1" CornerRadius="8">
+                        <StackPanel>
+                            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding SelectedDayTitle}" />
+                            <TextBlock Margin="0,6,0,0" Foreground="{StaticResource TextSecondaryBrush}">
+                                <Run Text="净值 " />
+                                <Run Text="{Binding SelectedDayNetValue, Mode=OneWay}" FontWeight="SemiBold" />
+                                <Run Text="  |  权益 " />
+                                <Run Text="{Binding SelectedDayEquity, Mode=OneWay}" FontWeight="SemiBold" />
+                            </TextBlock>
+                            <TextBlock Margin="0,4,0,0" Text="{Binding SelectedDayChange, Mode=OneWay}" Foreground="{Binding SelectedDayBrush}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- 右侧：净值曲线 -->
+            <Border Grid.Column="2" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Text="净值曲线" />
+                        <TextBlock DockPanel.Dock="Right"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="虚线为初始净值 1.000" />
+                    </DockPanel>
+                    <controls:NetValueChart Grid.Row="1"
+                                            Margin="0,10,0,0"
+                                            Points="{Binding CurvePoints}"
+                                            MinValue="{Binding ChartMinValue}"
+                                            MaxValue="{Binding ChartMaxValue}"
+                                            BaselineValue="{Binding BaselineNetValue}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

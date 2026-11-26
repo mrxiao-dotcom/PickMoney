@@ -14,6 +14,7 @@ public class MainViewModel : ObservableObject
     private readonly TradingOrchestrator _tradingOrchestrator;
     private readonly IBinanceFuturesService _binanceService;
     private readonly NotificationService _notificationService;
+    private readonly NetValueHistoryService _netValueHistoryService;
     private readonly DispatcherTimer _scanTimer;
     private readonly StringBuilder _logTextBuilder = new();
     private AppConfig _currentConfig = new();
@@ -35,12 +36,13 @@ public class MainViewModel : ObservableObject
     private PositionViewModel? _selectedPosition;
     private CancellationTokenSource? _scanCancellation;
 
-    public MainViewModel(ConfigService configService, TradingOrchestrator tradingOrchestrator, IBinanceFuturesService binanceService, NotificationService notificationService)
+    public MainViewModel(ConfigService configService, TradingOrchestrator tradingOrchestrator, IBinanceFuturesService binanceService, NotificationService notificationService, NetValueHistoryService netValueHistoryService)
     {
         _configService = configService;
         _tradingOrchestrator = tradingOrchestrator;
         _binanceService = binanceService;
         _notificationService = notificationService;
+        _netValueHistoryService = netValueHistoryService;
         Accounts = new ObservableCollection<AccountViewModel>();
         Positions = new ObservableCollection<PositionViewModel>();
         Logs = new ObservableCollection<LogEntryViewModel>();
@@ -58,6 +60,7 @@ public class MainViewModel : ObservableObject
         ImportManualSymbolsCommand = new RelayCommand(async _ => await ImportManualSymbolsAsync(), _ => CanImportManualSymbols());
         ClosePositionCommand = new RelayCommand(async _ => await CloseSelectedPositionAsync(), _ => CanClosePosition());
         CloseAllPositionsCommand = new RelayCommand(async _ => await CloseAllPositionsAsync(), _ => CanCloseAllPositions());
+        ShowNetValueCommand = new RelayCommand(async _ => await ShowNetValueAsync(), _ => SelectedAccount is not null);
 
         _scanTimer = new DispatcherTimer();
         _scanTimer.Tick += async (_, _) => await ExecuteScanAsync();
@@ -80,6 +83,7 @@ public class MainViewModel : ObservableObject
     public RelayCommand ImportManualSymbolsCommand { get; }
     public RelayCommand ClosePositionCommand { get; }
     public RelayCommand CloseAllPositionsCommand { get; }
+    public RelayCommand ShowNetValueCommand { get; }
 
     public string TriggerDropPercent
     {
@@ -484,6 +488,56 @@ public class MainViewModel : ObservableObject
         }
 
         Application.Current.Dispatcher.Invoke(() => account.UpdateEquity(equity));
+
+        // 记录当日净值/权益快照（同一天覆盖写入）
+        _ = RecordNetValueAsync(account, equity);
+    }
+
+    private async Task RecordNetValueAsync(AccountViewModel account, decimal equity)
+    {
+        try
+        {
+            await _netValueHistoryService.RecordAsync(
+                account.Id,
+                account.AccountName,
+                account.InitialCapital,
+                equity);
+        }
+        catch (Exception ex)
+        {
+            AppendExternalLog("WARN", "SYSTEM", $"记录净值快照失败：{ex.Message}", DateTime.Now);
+        }
+    }
+
+    private async Task ShowNetValueAsync()
+    {
+        var account = SelectedAccount;
+        if (account is null)
+        {
+            return;
+        }
+
+        await ShowNetValueForAccountAsync(account);
+    }
+
+    private async Task ShowNetValueForAccountAsync(AccountViewModel account)
+    {
+        // 先记录一次当前净值，保证今天的快照是最新的
+        if (account.HasEquity)
+        {
+            await RecordNetValueAsync(account, account.CurrentEquity);
+        }
+
+        var viewModel = new NetValueWindowViewModel(
+            _netValueHistoryService,
+            account.Id,
+            account.AccountName,
+            account.InitialCapital);
+
+        await viewModel.LoadAsync();
+
+        var window = new NetValueWindow { DataContext = viewModel };
+        window.ShowDialog();
     }
 
     private async void OpenAccountSettings()
@@ -745,6 +799,7 @@ public class MainViewModel : ObservableObject
         Accounts.Clear();
         foreach (var account in accountViewModels)
         {
+            account.ShowNetValueCommand = new RelayCommand(async _ => await ShowNetValueForAccountAsync(account));
             Accounts.Add(account);
         }
 

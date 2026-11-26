@@ -13,6 +13,7 @@ public partial class MainWindow : Window
         var baseDirectory = AppContext.BaseDirectory;
         var configService = new ConfigService(baseDirectory);
         var positionLimitCache = new PositionLimitCacheService(baseDirectory);
+        var netValueHistoryService = new NetValueHistoryService(baseDirectory);
         var binanceService = new BinanceFuturesService(positionLimitCache);
         var tradeLogService = new TradeLogService(baseDirectory);
         var notificationService = new NotificationService();
@@ -26,7 +27,8 @@ public partial class MainWindow : Window
                 notificationService,
                 log => viewModel?.AppendExternalLog(log.Level, log.AccountName, log.Message, log.Timestamp)),
             binanceService,
-            notificationService);
+            notificationService,
+            netValueHistoryService);
 
         DataContext = viewModel;
         Loaded += async (_, _) =>
