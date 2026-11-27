@@ -29,6 +29,14 @@ public sealed class NetValueHistoryService
     /// </summary>
     public async Task RecordAsync(Guid accountId, string accountName, decimal initialCapital, decimal equity, CancellationToken cancellationToken = default)
     {
+        await RecordAsync(accountId, accountName, initialCapital, equity, DateOnly.FromDateTime(DateTime.Now), cancellationToken);
+    }
+
+    /// <summary>
+    /// 记录指定日期的净值与权益。同一天重复记录会覆盖当天已有的快照。
+    /// </summary>
+    public async Task RecordAsync(Guid accountId, string accountName, decimal initialCapital, decimal equity, DateOnly date, CancellationToken cancellationToken = default)
+    {
         if (initialCapital <= 0)
         {
             // 未配置初始资金时无法计算净值，不记录
@@ -36,14 +44,13 @@ public sealed class NetValueHistoryService
         }
 
         var history = await LoadAsync(accountId, cancellationToken);
-        var today = DateOnly.FromDateTime(DateTime.Now);
 
-        var existing = history.Records.FirstOrDefault(item => item.Date == today);
+        var existing = history.Records.FirstOrDefault(item => item.Date == date);
         if (existing is null)
         {
             history.Records.Add(new DailyNetValueRecord
             {
-                Date = today,
+                Date = date,
                 Equity = equity,
                 NetValue = equity / initialCapital,
                 RecordedAt = DateTime.Now

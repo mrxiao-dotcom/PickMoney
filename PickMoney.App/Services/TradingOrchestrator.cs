@@ -52,12 +52,9 @@ public class TradingOrchestrator
                 Application.Current.Dispatcher.Invoke(() => runtimeStates.Add(runtime));
             }
 
-            var positions = await _binanceService.GetPositionsAsync(account, cancellationToken);
-            runtime.Positions = positions.ToList();
-            runtime.LastScanTime = DateTime.Now;
-            runtime.LastPositionCheckTime = DateTime.Now;
-
-            // 读取账户权益用于计算净值，失败不影响本轮交易逻辑
+            // 先读取账户权益用于计算净值。
+            // 这一步必须放在交易逻辑之前：否则某个账户在下单/查持仓时抛异常，
+            // 会导致本轮扫描中断，排在它后面的账户既拿不到权益、也不会写入净值快照。
             try
             {
                 var equity = await _binanceService.GetAccountEquityAsync(account, cancellationToken);
@@ -70,24 +67,37 @@ public class TradingOrchestrator
                 Log("WARN", account.AccountName, $"读取账户权益失败，净值暂不更新：{ex.Message}");
             }
 
-            if (account.BuyAmount == 0)
+            // 单个账户的交易逻辑独立兜底，避免一个账户失败拖垮整轮扫描的其他账户
+            try
             {
-                await HandleClearAllAsync(account, positions, closeAllResults, cancellationToken);
-            }
-            else
-            {
-                if (account.EnableOpenPosition)
+                var positions = await _binanceService.GetPositionsAsync(account, cancellationToken);
+                runtime.Positions = positions.ToList();
+                runtime.LastScanTime = DateTime.Now;
+                runtime.LastPositionCheckTime = DateTime.Now;
+
+                if (account.BuyAmount == 0)
                 {
-                    await HandleOpenPositionsAsync(account, config, candidates, positions, buyResults, cancellationToken);
+                    await HandleClearAllAsync(account, positions, closeAllResults, cancellationToken);
+                }
+                else
+                {
+                    if (account.EnableOpenPosition)
+                    {
+                        await HandleOpenPositionsAsync(account, config, candidates, positions, buyResults, cancellationToken);
+                    }
+
+                    if (account.EnableTakeProfit)
+                    {
+                        await HandleTakeProfitsAsync(account, config, positions, tpResults, cancellationToken);
+                    }
                 }
 
-                if (account.EnableTakeProfit)
-                {
-                    await HandleTakeProfitsAsync(account, config, positions, tpResults, cancellationToken);
-                }
+                await positionRefresh(account.Id);
             }
-
-            await positionRefresh(account.Id);
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log("ERROR", account.AccountName, $"账户处理失败，已跳过该账户并继续处理其他账户：{ex.Message}");
+            }
         }
 
         await FlushNotificationsAsync(config, buyResults, tpResults, closeAllResults, cancellationToken);

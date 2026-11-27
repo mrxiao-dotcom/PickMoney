@@ -491,6 +491,9 @@ public class MainViewModel : ObservableObject
 
         // 记录当日净值/权益快照（同一天覆盖写入）
         _ = RecordNetValueAsync(account, equity);
+
+        // 补记中间遗漏的日期（应用没开的那些天）
+        _ = BackfillMissingNetValueDaysAsync(account, equity);
     }
 
     private async Task RecordNetValueAsync(AccountViewModel account, decimal equity)
@@ -509,6 +512,56 @@ public class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 补记缺口日期的净值快照。
+    /// 当天收盘后的快照以收盘权益为准；更早的缺口日只能沿用最近一次已知权益，
+    /// 避免历史曲线出现空白。
+    /// </summary>
+    private async Task BackfillMissingNetValueDaysAsync(AccountViewModel account, decimal equity)
+    {
+        try
+        {
+            var history = await _netValueHistoryService.LoadAsync(account.Id);
+            if (account.InitialCapital <= 0)
+            {
+                return;
+            }
+
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            var lastDate = history.Records.Count > 0 ? history.Records.Max(item => item.Date) : (DateOnly?)null;
+
+            // 最后一条记录距今超过一天，说明中间有没记录的日期
+            if (lastDate is null || lastDate.Value >= today)
+            {
+                return;
+            }
+
+            var netValue = equity / account.InitialCapital;
+            var gap = lastDate.Value.AddDays(1);
+
+            while (gap < today)
+            {
+                await _netValueHistoryService.RecordAsync(
+                    account.Id,
+                    account.AccountName,
+                    account.InitialCapital,
+                    equity,
+                    gap);
+                gap = gap.AddDays(1);
+            }
+
+            AppendExternalLog(
+                "INFO",
+                account.AccountName,
+                $"已补记 {(today.DayNumber - lastDate.Value.DayNumber) - 1} 个遗漏日期的净值快照（沿用最近权益 {equity:F2}）。",
+                DateTime.Now);
+        }
+        catch (Exception ex)
+        {
+            AppendExternalLog("WARN", "SYSTEM", $"补记净值快照失败：{ex.Message}", DateTime.Now);
+        }
+    }
+
     private async Task ShowNetValueAsync()
     {
         var account = SelectedAccount;
@@ -522,7 +575,22 @@ public class MainViewModel : ObservableObject
 
     private async Task ShowNetValueForAccountAsync(AccountViewModel account)
     {
-        // 先记录一次当前净值，保证今天的快照是最新的
+        // 点开弹窗时立即拉一次最新权益，保证今天的快照是最新的。
+        // 这里不能只依赖扫描时的缓存：若某个账户在扫描中被跳过或权益读取失败，
+        // 点击弹窗就是补齐当天数据的唯一机会。
+        if (!account.HasEquity)
+        {
+            try
+            {
+                var equity = await _binanceService.GetAccountEquityAsync(account.ToModel());
+                account.UpdateEquity(equity);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                AppendExternalLog("WARN", account.AccountName, $"刷新账户权益失败：{ex.Message}", DateTime.Now);
+            }
+        }
+
         if (account.HasEquity)
         {
             await RecordNetValueAsync(account, account.CurrentEquity);
@@ -665,8 +733,16 @@ public class MainViewModel : ObservableObject
         var summaries = new List<string>();
         foreach (var account in _currentConfig.Accounts)
         {
-            var summary = await _binanceService.GetAccountAssetSummaryAsync(account, cancellationToken);
-            summaries.Add($"{account.AccountName} - 账户权益 {summary.AccountEquity:F2} USDT | 钱包余额 {summary.WalletBalance:F2} USDT | 未实现盈亏 {summary.UnrealizedProfit:F2} USDT | 可用余额 {summary.AvailableBalance:F2} USDT");
+            // 单个账户失败不影响其他账户的统计
+            try
+            {
+                var summary = await _binanceService.GetAccountAssetSummaryAsync(account, cancellationToken);
+                summaries.Add($"{account.AccountName} - 账户权益 {summary.AccountEquity:F2} USDT | 钱包余额 {summary.WalletBalance:F2} USDT | 未实现盈亏 {summary.UnrealizedProfit:F2} USDT | 可用余额 {summary.AvailableBalance:F2} USDT");
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                AppendExternalLog("WARN", account.AccountName, $"读取账户权益汇总失败，已跳过：{ex.Message}", now);
+            }
         }
 
         if (summaries.Count == 0)
